@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: login-app
+  name: login-app
+spec:
+  containers:
+  - image: registry.gitlab.com/theo7060938/k8s-data/sample:v1
+    name: login-app
+  restartPolicy: Always
+  # Credentials that we need for pulling the image from Gitlab
+  imagePullSecrets:
+    - name: app-secret

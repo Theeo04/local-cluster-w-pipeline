@@ -1,0 +1,37 @@
+variables:
+  KUBE_CONTEXT: theo7060938/k8s-connection:k8s-connection
+
+stages:
+  - build
+  - deploy
+
+# Create a new image and uploading it on Gitlab Images Repo
+build:
+  image: docker:20.10.16
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - docker build -t $CI_REGISTRY/theo7060938/k8s-data/sample:v1 .
+    - docker push $CI_REGISTRY/theo7060938/k8s-data/sample:v1
+    - echo "Image Built"
+
+deploy_project:
+  stage: deploy
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: ['']
+  script:
+    # Connecting to Kubernetes Cluster using Gitlab Agent
+    - kubectl config get-contexts 
+    - kubectl config use-context $KUBE_CONTEXT
+    - kubectl get pods
+    - kubectl get nodes -o wide
+
+    # Re-applying the objects configuration files with new image created
+    - echo "Deploy App on the Cluster"
+    - ls $CI_PROJECT_DIR/k8s-files
+    - kubectl apply -f $CI_PROJECT_DIR/k8s-files/.
+    - kubectl get pods
+    - kubectl get services
